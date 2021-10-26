@@ -1,10 +1,12 @@
 import numpy as np
 
-# test_signal = np.array([0,4,4,0,-4,-4,0]) # y-axis
-# test_signal2 = np.array([1,3,4,3,1,-1,-2,-1,0]) # x-axis
+test_signal = np.array([1,2,3,4]) # y-axis
+test_signal2 = np.array([1,2,3,4]) # x-axis
 
-test_signal = np.array([1,6,8,2]) # y-axis
-test_signal2 = np.array([4,2,5,7]) # x-axis
+# test_signal = np.array([[1,2],[3,4],[5,6]]) # y-axis
+# test_signal2 = np.array([[1,2],[3,4],[5,6]]) # x-axis
+
+# print(test_signal[1])
 
 ### Distance Matrix ###
 def Distance_matrix(sig1, sig2):
@@ -39,8 +41,8 @@ def Cost_matrix(sig1, sig2):
         for j in range(1, row):
             minvalue = min(c_matrix[i-1,j-1], c_matrix[i,j-1], c_matrix[i-1,j])
             c_matrix[i,j] = d_matrix[i, j] + minvalue
-    # print(d_matrix)
-    # print(c_matrix)
+    print('distance matrix', d_matrix)
+    print('cost matrix', c_matrix)
     return d_matrix, c_matrix
 Cost_matrix(test_signal, test_signal2)
 
