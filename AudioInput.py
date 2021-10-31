@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.io.wavfile import read as wavread
 import math
+import matplotlib.pyplot as plt
 
 ### Block Audio ###
 def block_audio(x,blockSize,hopSize,fs):
@@ -61,12 +62,16 @@ def extract_zerocrossingrate(xb):
     ZC = mean
     return ZC
 
-### Generate the Feature Matrix ###
-def Feature_Matrix(fileName, blockSize=1024, hopSize=512):
+### Get Audio Block ###
+def getBlock(fileName, blockSize=1024, hopSize=512):
     fs, audio = ToolReadAudio(fileName)
     xb, t = block_audio(audio, blockSize, hopSize, fs)
     numBlock = math.ceil(audio.size / 512)
+    return xb, numBlock
 
+### Generate the Feature Matrix ###
+def Feature_Matrix(fileName):
+    xb, numBlock = getBlock(fileName)
     feature_matrix = np.zeros([numBlock, 2])
     max_rms = 0
     max_zcr = 0
@@ -81,7 +86,7 @@ def Feature_Matrix(fileName, blockSize=1024, hopSize=512):
             max_zcr = abs(zcr)
         feature_vec = np.array([rms, zcr])
         feature_matrix[i] = feature_vec
-        
+
     ### Normalize ###
     for i in range(0, numBlock):
         feature_matrix[i][0] = feature_matrix[i][0] / max_rms
@@ -121,15 +126,14 @@ def Cost_matrix(sig1, sig2):
         for j in range(1, row):
             minvalue = min(c_matrix[i-1,j-1], c_matrix[i,j-1], c_matrix[i-1,j])
             c_matrix[i,j] = d_matrix[i, j] + minvalue
-    # print('distance matrix', d_matrix)
-    # print('cost matrix', c_matrix)
     return d_matrix, c_matrix
 
 ### DTW Path ###
 def DTW(matrix):
     i = matrix.shape[0] - 1
     j = matrix.shape[1] - 1
-    path = [(i + 1,j + 1)]
+    # path = [[i + 1,j + 1]]
+    path = [[i, j]]
     while i > 0 or j > 0:
         a_list = [matrix[i-1,j-1], matrix[i,j-1], matrix[i-1,j]]
         minvalue = min(a_list)
@@ -143,20 +147,54 @@ def DTW(matrix):
         elif min_index == 2:
             i = i - 1
             j = j
-        path.append((i+1,j+1))
-    print(matrix)
-    print(path)
-    return path
+        # path.append([i+1,j+1])
+        path.append([i,j])
+    path_np = np.array(path)
+    # print(matrix)
+    # print(path)
+    return path_np
 
 
 # test_matrix = np.array([[1,2],[3,4],[5,6]])
 # test_matrix2 = np.array([[3,7],[3,8],[10,5],[3,7]])
+# test_matrix = np.array([1,3,9,2,1])
+# test_matrix2 = np.array([2,0,0,8,7,2])
+# test_matrix = np.array([1,0,2,3,1])
+# test_matrix2 = np.array([1,2,3,0])
 
-file = '7100 Research/SO_RE_80_piano_melody_lime_Gmaj(Mono_1).wav'
-file2 = '7100 Research/SO_RE_80_piano_melody_lime_Gmaj(Mono_2).wav'
+file = '7100 Research (Local File)/SO_RE_80_piano_melody_lime_Gmaj(Mono_1).wav'
+file2 = '7100 Research (Local File)/SO_RE_80_piano_melody_lime_Gmaj(Mono_1_slowed)_1.wav'
 FeatureMatrix = Feature_Matrix(file)
 FeatureMatrix2 = Feature_Matrix(file2)
 
+# FeatureMatrix, FeatureMatrix2
+# test_matrix, test_matrix2
 c_matrix = Cost_matrix(FeatureMatrix, FeatureMatrix2)[1]
 d_matrix = Cost_matrix(FeatureMatrix, FeatureMatrix2)[0]
-DTW(c_matrix) # Return list of tuples, (y-axis, x-axis)
+dtw_calculation = DTW(c_matrix) # Return numpy array, [y-axis, x-axis]
+# print('distance matrix\n', d_matrix)
+# print('cost matrix\n', c_matrix)
+# print('path\n', dtw_calculation)
+
+### Plotting ###
+plt.figure(figsize=(9, 3))
+plt.subplot(1, 2, 1)
+plt.imshow(c_matrix, cmap='gray_r', origin='lower', aspect='equal')
+plt.plot(dtw_calculation[:, 1], dtw_calculation[:, 0], marker='o', color='r')
+plt.clim([0, np.max(c_matrix)])
+plt.colorbar()
+plt.title('Cost Matrix With Path')
+plt.xlabel('Sequence Y')
+plt.ylabel('Sequence X')
+
+plt.subplot(1, 2, 2)
+plt.imshow(d_matrix, cmap='gray_r', origin='lower', aspect='equal')
+plt.plot(dtw_calculation[:, 1], dtw_calculation[:, 0], marker='o', color='r')
+plt.clim([0, np.max(d_matrix)])
+plt.colorbar()
+plt.title('Distance Matrix With Path')
+plt.xlabel('Sequence Y')
+plt.ylabel('Sequence X')
+
+plt.tight_layout()
+plt.show()
