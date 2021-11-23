@@ -1,12 +1,10 @@
 import numpy as np
 
-test_signal = np.array([1,2,3,4]) # y-axis
-test_signal2 = np.array([1,2,3,4]) # x-axis
+test_signal = np.array([1,0,2,3,1]) # y-axis
+test_signal2 = np.array([1,2,3,0]) # x-axis
 
 # test_signal = np.array([[1,2],[3,4],[5,6]]) # y-axis
 # test_signal2 = np.array([[1,2],[3,4],[5,6]]) # x-axis
-
-# print(test_signal[1])
 
 ### Distance Matrix ###
 def Distance_matrix(sig1, sig2):
