@@ -48,7 +48,7 @@ def RMS(audio, blockSize=1024, hopSize=512, fs=None):
 def featVector(path):
     fs, audio = ToolReadAudio(path)
     zcr = ZCR(audio)
-    rms = RMS(audio)
+    rms = RMS(audio, fs = fs)
 
     feature_vec = np.zeros([zcr.shape[0], 2])
     for i in range(len(zcr)):
@@ -93,34 +93,60 @@ def Cost_matrix(sig1, sig2):
         for j in range(1, row):
             minvalue = min(c_matrix[i-1,j-1], c_matrix[i,j-1], c_matrix[i-1,j])
             c_matrix[i,j] = d_matrix[i, j] + minvalue
-    return d_matrix, c_matrix
+    return c_matrix
 
+### DTW Path ###
+def DTW(matrix):
+    i = matrix.shape[0] - 1
+    j = matrix.shape[1] - 1
+    # path = [[i + 1,j + 1]]
+    path = [[i, j]]
+    while i > 0 or j > 0:
+        a_list = [matrix[i-1,j-1], matrix[i,j-1], matrix[i-1,j]]
+        minvalue = min(a_list)
+        min_index = a_list.index(minvalue)
+        if min_index == 0:
+            i = i - 1
+            j = j - 1
+        elif min_index == 1:
+            i = i
+            j = j - 1
+        elif min_index == 2:
+            i = i - 1
+            j = j
+        # path.append([i+1,j+1])
+        path.append([i,j])
+    path_np = np.array(path)
+    # print(matrix)
+    # print(path)
+    return path_np
 
-file = '7100 Research (Local File)/pid1263-01.wav'
-file2 = '7100 Research (Local File)/pid9048-01.wav'
+file = '7100 Research (Local File)/pid1263(part)_1.wav'
+file2 = '7100 Research (Local File)/pid9048(part)_1.wav'
 FeatureVec = featVector(file)
 FeatureVec2 = featVector(file2)
 
-# c_matrix = Cost_matrix(FeatureVec, FeatureVec2)[1]
 d_matrix = Distance_matrix(FeatureVec, FeatureVec2)
+c_matrix = Cost_matrix(FeatureVec, FeatureVec2)
+dtw_calculation = DTW(c_matrix)
 
 ### Plotting ###
-# plt.figure(figsize=(9, 3))
-# plt.subplot(1, 2, 1)
-# plt.imshow(c_matrix, origin='lower', aspect='equal')
-# # plt.plot(dtw_calculation[:, 1], dtw_calculation[:, 0], color='r')
-# plt.clim([0, np.max(c_matrix)])
-# plt.colorbar()
-# plt.title('Cost Matrix With Path')
-# plt.xlabel('Sequence Y')
-# plt.ylabel('Sequence X')
+plt.figure(figsize=(9, 3))
+plt.subplot(1, 2, 1)
+plt.imshow(c_matrix, origin='lower', aspect='equal')
+plt.plot(dtw_calculation[:, 1], dtw_calculation[:, 0], color='r')
+plt.clim([0, np.max(c_matrix)])
+plt.colorbar()
+plt.title('Cost Matrix With Path (Tempo Different Part)')
+plt.xlabel('Sequence Y')
+plt.ylabel('Sequence X')
 
-# plt.subplot(1, 2, 2)
+plt.subplot(1, 2, 2)
 plt.imshow(d_matrix, origin='lower', aspect='equal')
-# plt.plot(dtw_calculation[:, 1], dtw_calculation[:, 0], marker='o', color='r')
+plt.plot(dtw_calculation[:, 1], dtw_calculation[:, 0], color='r')
 plt.clim([0, np.max(d_matrix)])
 plt.colorbar()
-plt.title('Distance Matrix - RMS/ZCR')
+plt.title('Distance Matrix - RMS/ZCR (Tempo Different Part)')
 plt.xlabel('Sequence Y')
 plt.ylabel('Sequence X')
 
