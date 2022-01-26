@@ -124,7 +124,7 @@ def modified_DTW(matrix, runAll=True):
                 path.reverse()
             # path_np = np.flip(np.array(path))
             path_np = np.array(path)
-            print(path_np)
+            # print(path_np)
 
     elif runAll==False:
         n = N - 1
@@ -152,9 +152,20 @@ def modified_DTW(matrix, runAll=True):
             path.reverse()
         # path_np = np.flip(np.array(path))
         path_np = np.array(path)
-        print("lowest cost index starting at:", m)
+        max_vec = np.amax(path_np, axis=0)
+        start_ind = m
+        end_ind = max_vec[1]
 
-    return path_np
+    return path_np, start_ind, end_ind
+
+### Convert path index to samples ###
+def pathInd2Time(start_ind, end_ind, hop_len=512, fs=44100):
+    start_sample = librosa.frames_to_samples(start_ind, hop_length=hop_len)
+    end_sample = librosa.frames_to_samples(end_ind, hop_length=hop_len)
+
+    start_t = start_sample/fs
+    end_t = end_sample/fs
+    return start_t, end_t
 
 # # Number Test:
 # X = np.array([3, 0, 6])
@@ -165,7 +176,6 @@ def modified_DTW(matrix, runAll=True):
 # c_matrix = Cost_matrix(X,Y) 
 # path = modified_DTW(c_matrix, runAll=False)
 
-
 # Audio Test:
 file = 'Assignments/7100 Research (Local File)/Subsequence(pid9048-01_bip).wav'
 file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
@@ -174,8 +184,8 @@ file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
 
 # d_matrix = Distance_matrix(chromaVec,chromaVec2)
 # c_matrix = Cost_matrix(chromaVec,chromaVec2) 
-# path = modified_DTW(c_matrix, runAll=False)
-# # print(path)
+# path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
+# start_t, end_t = pathInd2Time(start_ind, end_ind)
 
 # plt.subplot(2,1,1)
 # plt.imshow(d_matrix, origin='lower', aspect='auto')
@@ -230,12 +240,9 @@ def readCSV(filepath, ref_track, start_ind, end_ind):
     ind_ref = fields.index(ref_track)
     start_t = float(rows[start_ind][ind_ref])
     end_t = float(rows[end_ind+1][ind_ref])
-    print(start_t)
-    print(end_t)
+    print("picked starting time at:", start_t)
+    print("picked ending time at:", end_t)
 
-    # print(ind_ref)
-    # print(fields)
-    # print(rows[0])
     return start_t, end_t
 
 def self_evaluation(audioPath, start_t, end_t):
@@ -249,8 +256,10 @@ def self_evaluation(audioPath, start_t, end_t):
 
     d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
     c_matrix = Cost_matrix(chromagram_frame,chromagram_ref) 
-    path = modified_DTW(c_matrix, runAll=False)
-    print(path)
+    path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
+    time_s, time_e = pathInd2Time(start_ind, end_ind)
+    print("calculated time starts at:", time_s)
+    print("calculated time ends at:", time_e)
 
     # Plotting
     plt.subplot(2,1,1)
@@ -274,8 +283,9 @@ def self_evaluation(audioPath, start_t, end_t):
     plt.tight_layout()
     plt.show()
 
+
 csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
 ref_track = "pid9072-01"
 audioPath = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
-start_t, end_t = readCSV(csv_filepath, ref_track, 244, 288)
+start_t, end_t = readCSV(csv_filepath, ref_track, 25, 49)
 self_evaluation(audioPath, start_t, end_t)
