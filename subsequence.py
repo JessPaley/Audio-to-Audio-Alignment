@@ -3,6 +3,7 @@ import numpy as np
 from scipy.io.wavfile import read as wavread
 from scipy.spatial.distance import pdist, cdist
 import matplotlib.pyplot as plt
+import math
 
 # To do:
 # DTW determines multiple possible path candidates representing the potentially overlapping between pair of recording
@@ -131,8 +132,9 @@ def modified_DTW(matrix, runAll=True):
         path = [[n, m]]
         while n > 0:
             if m == 0:
-                n = n-1
-                m = 0
+                # n = n-1
+                # m = 0
+                continue
             else:
                 a_list = [matrix[n-1,m-1], matrix[n,m-1], matrix[n-1,m]]
                 minvalue = min(a_list)
@@ -150,7 +152,7 @@ def modified_DTW(matrix, runAll=True):
             path.reverse()
         # path_np = np.flip(np.array(path))
         path_np = np.array(path)
-        print(path_np)
+        print("lowest cost index starting at:", m)
 
     return path_np
 
@@ -167,33 +169,113 @@ def modified_DTW(matrix, runAll=True):
 # Audio Test:
 file = 'Assignments/7100 Research (Local File)/Subsequence(pid9048-01_bip).wav'
 file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
-chromaVec = featVector(file)
-chromaVec2 = featVector(file2) #ref
+# chromaVec = featVector(file)
+# chromaVec2 = featVector(file2) #ref
 
-d_matrix = Distance_matrix(chromaVec,chromaVec2)
-c_matrix = Cost_matrix(chromaVec,chromaVec2) 
-path = modified_DTW(c_matrix, runAll=False)
-# print(path)
-plt.subplot(2,1,1)
-plt.imshow(d_matrix, origin='lower', aspect='auto')
+# d_matrix = Distance_matrix(chromaVec,chromaVec2)
+# c_matrix = Cost_matrix(chromaVec,chromaVec2) 
+# path = modified_DTW(c_matrix, runAll=False)
+# # print(path)
+
+# plt.subplot(2,1,1)
+# plt.imshow(d_matrix, origin='lower', aspect='auto')
+# # plt.plot(path[:, 1], path[:, 0], color='r')
+# plt.clim([0, np.max(d_matrix)])
+# plt.colorbar()
+# plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
+# plt.xlabel('Subsequence')
+# plt.ylabel('Full')
+
+# plt.subplot(2,1,2)
+# plt.imshow(d_matrix, origin='lower', aspect='auto')
 # plt.plot(path[:, 1], path[:, 0], color='r')
-plt.clim([0, np.max(d_matrix)])
-plt.colorbar()
-plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
-plt.xlabel('Subsequence')
-plt.ylabel('Full')
+# plt.clim([0, np.max(d_matrix)])
+# plt.colorbar()
+# plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
+# plt.xlabel('Subsequence')
+# plt.ylabel('Full')
 
-plt.subplot(2,1,2)
-plt.imshow(d_matrix, origin='lower', aspect='auto')
-plt.plot(path[:, 1], path[:, 0], color='r')
-plt.clim([0, np.max(d_matrix)])
-plt.colorbar()
-plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
-plt.xlabel('Subsequence')
-plt.ylabel('Full')
-
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
 
 
+# To Do:
+# Evaluating the algorithm
+# Compare self similarity, and check the onset time on dataset
+
+# Pick a frame from the reference track (pid9072-01): measure #(start) -> measure #(end)
+# Not Unique Frame Index: 25 - 49
+# Unique Frame Index: 244 - 288
+
+# Save the time(sec) value for the frame
+# Use the subsequence algorithm to find the frame in other tracks (path index)
+# Convert the subsequence path index to time(sec) and 
+
+def readCSV(filepath, ref_track, start_ind, end_ind):
+    import csv
+    import os
+
+    fields = []
+    rows = []
+    with open(filepath, 'r') as csvfile:
+        # creating a csv reader object
+        csvreader = csv.reader(csvfile)    
+        # extracting field names through first row
+        fields = next(csvreader)
+        # extracting each data row one by one
+        for row in csvreader:
+            rows.append(row)
+    
+    ind_ref = fields.index(ref_track)
+    start_t = float(rows[start_ind][ind_ref])
+    end_t = float(rows[end_ind+1][ind_ref])
+    print(start_t)
+    print(end_t)
+
+    # print(ind_ref)
+    # print(fields)
+    # print(rows[0])
+    return start_t, end_t
+
+def self_evaluation(audioPath, start_t, end_t):
+    fs, audio_ref = ToolReadAudio(audioPath)
+    audio_frame = audio_ref[math.ceil(start_t*fs): math.ceil(end_t*fs)]
+    # print(audio_ref.size)
+    # print(math.ceil(start_t * fs))
+
+    chromagram_ref = chroma(audio_ref, sr=fs)
+    chromagram_frame = chroma(audio_frame, sr=fs)
+
+    d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
+    c_matrix = Cost_matrix(chromagram_frame,chromagram_ref) 
+    path = modified_DTW(c_matrix, runAll=False)
+    print(path)
+
+    # Plotting
+    plt.subplot(2,1,1)
+    plt.imshow(d_matrix, origin='lower', aspect='auto')
+    # plt.plot(path[:, 1], path[:, 0], color='r')
+    plt.clim([0, np.max(d_matrix)])
+    plt.colorbar()
+    plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
+    plt.xlabel('Full')
+    plt.ylabel('Subsequence')
+
+    plt.subplot(2,1,2)
+    plt.imshow(d_matrix, origin='lower', aspect='auto')
+    plt.plot(path[:, 1], path[:, 0], color='r')
+    plt.clim([0, np.max(d_matrix)])
+    plt.colorbar()
+    plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
+    plt.xlabel('Full')
+    plt.ylabel('Subsequence')
+
+    plt.tight_layout()
+    plt.show()
+
+csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
+ref_track = "pid9072-01"
+audioPath = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
+start_t, end_t = readCSV(csv_filepath, ref_track, 244, 288)
+self_evaluation(audioPath, start_t, end_t)
