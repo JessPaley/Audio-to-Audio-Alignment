@@ -4,6 +4,7 @@ from scipy.io.wavfile import read as wavread
 from scipy.spatial.distance import pdist, cdist
 import matplotlib.pyplot as plt
 import math
+from scipy.stats import linregress
 
 # To do:
 # DTW determines multiple possible path candidates representing the potentially overlapping between pair of recording
@@ -124,11 +125,24 @@ def modified_DTW(matrix, runAll=True):
                 path.reverse()
             # path_np = np.flip(np.array(path))
             path_np = np.array(path)
-            # print(path_np)
+            X = np.zeros(path_np.shape[0])
+            Y = np.zeros(path_np.shape[0])
+            for i in range(0, path_np.shape[0]):
+                X[i] = path_np[i][0]
+                Y[i] = path_np[i][1]      
+            result = linregress(X,Y)
+
+            if abs(result.slope - 1) < 0.5:
+                print(result.slope)
+                print(np.amax(path_np, axis=0)[1])
+                max_vec = np.amax(path_np, axis=0)
+                start_ind = m
+                end_ind = max_vec[1]
 
     elif runAll==False:
         n = N - 1
         m = matrix[-1, :].argmin() # Locate the lowest cost index from distance matrix
+        # m = 13812
         path = [[n, m]]
         while n > 0:
             if m == 0:
@@ -152,6 +166,15 @@ def modified_DTW(matrix, runAll=True):
             path.reverse()
         # path_np = np.flip(np.array(path))
         path_np = np.array(path)
+
+        X = np.zeros(path_np.shape[0])
+        Y = np.zeros(path_np.shape[0])
+        for i in range(0, path_np.shape[0]):
+            X[i] = path_np[i][0]
+            Y[i] = path_np[i][1]      
+        result = linregress(X,Y)
+        print(result.slope)
+
         max_vec = np.amax(path_np, axis=0)
         start_ind = m
         end_ind = max_vec[1]
@@ -167,18 +190,32 @@ def pathInd2Time(start_ind, end_ind, hop_len=512, fs=44100):
     end_t = end_sample/fs
     return start_t, end_t
 
-# # Number Test:
-# X = np.array([3, 0, 6])
-# Y = np.array([2, 4, 0, 4, 0, 0, 5, 2])
-# # X = np.array([1, 3, 9, 2, 1])
-# # Y = np.array([2, 0, 0, 8, 7, 2])
-# d_matrix = Distance_matrix(X,Y)
-# c_matrix = Cost_matrix(X,Y) 
-# path = modified_DTW(c_matrix, runAll=False)
+def plot(d_matrix, path):
+    # Plotting
+    plt.subplot(2,1,1)
+    plt.imshow(d_matrix, origin='lower', aspect='auto')
+    plt.clim([0, np.max(d_matrix)])
+    plt.colorbar()
+    plt.title('Subsequence - DTW (Pitch Chroma)')
+    plt.xlabel('Full')
+    plt.ylabel('Subsequence')
 
-# Audio Test:
-file = 'Assignments/7100 Research (Local File)/Subsequence(pid9048-01_bip).wav'
-file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
+    # Plot with path
+    plt.subplot(2,1,2)
+    plt.imshow(d_matrix, origin='lower', aspect='auto')
+    plt.plot(path[:, 1], path[:, 0], color='r')
+    plt.clim([0, np.max(d_matrix)])
+    plt.colorbar()
+    plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
+    plt.xlabel('Full')
+    plt.ylabel('Subsequence')
+
+    plt.tight_layout()
+    plt.show()
+
+# # Audio Test:
+# file = 'Assignments/7100 Research (Local File)/Subsequence(pid9048-01_bip).wav'
+# file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
 # chromaVec = featVector(file)
 # chromaVec2 = featVector(file2) #ref
 
@@ -187,29 +224,8 @@ file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
 # path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
 # start_t, end_t = pathInd2Time(start_ind, end_ind)
 
-# plt.subplot(2,1,1)
-# plt.imshow(d_matrix, origin='lower', aspect='auto')
-# # plt.plot(path[:, 1], path[:, 0], color='r')
-# plt.clim([0, np.max(d_matrix)])
-# plt.colorbar()
-# plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
-# plt.xlabel('Subsequence')
-# plt.ylabel('Full')
 
-# plt.subplot(2,1,2)
-# plt.imshow(d_matrix, origin='lower', aspect='auto')
-# plt.plot(path[:, 1], path[:, 0], color='r')
-# plt.clim([0, np.max(d_matrix)])
-# plt.colorbar()
-# plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
-# plt.xlabel('Subsequence')
-# plt.ylabel('Full')
-
-# plt.tight_layout()
-# plt.show()
-
-
-
+#____________________________________________________________________________________________________#
 # To Do:
 # Evaluating the algorithm
 # Compare self similarity, and check the onset time on dataset
@@ -222,7 +238,7 @@ file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
 # Use the subsequence algorithm to find the frame in other tracks (path index)
 # Convert the subsequence path index to time(sec) and 
 
-def readCSV(filepath, ref_track, start_ind, end_ind):
+def readCSV(filepath, trackName, start_ind, end_ind, trackName_ref="pid9072-01"):
     import csv
     import os
 
@@ -237,19 +253,23 @@ def readCSV(filepath, ref_track, start_ind, end_ind):
         for row in csvreader:
             rows.append(row)
     
-    ind_ref = fields.index(ref_track)
-    start_t = float(rows[start_ind][ind_ref])
-    end_t = float(rows[end_ind+1][ind_ref])
-    print("picked starting time at:", start_t)
-    print("picked ending time at:", end_t)
+    ind_ref = fields.index(trackName_ref)
+    start_GT = float(rows[start_ind][ind_ref])
+    end_GT = float(rows[end_ind+1][ind_ref])
+    print("Ground Truth starting time: ", start_GT)
+    print("Ground Truth ending: ", end_GT)
+
+    ind_test = fields.index(trackName)
+    start_t = float(rows[start_ind][ind_test])
+    end_t = float(rows[end_ind+1][ind_test])
+    print("%s starting time: %f" %(trackName, start_t))
+    print("%s ending time: %f" %(trackName, end_t))
 
     return start_t, end_t
 
 def self_evaluation(audioPath, start_t, end_t):
     fs, audio_ref = ToolReadAudio(audioPath)
     audio_frame = audio_ref[math.ceil(start_t*fs): math.ceil(end_t*fs)]
-    # print(audio_ref.size)
-    # print(math.ceil(start_t * fs))
 
     chromagram_ref = chroma(audio_ref, sr=fs)
     chromagram_frame = chroma(audio_frame, sr=fs)
@@ -260,32 +280,31 @@ def self_evaluation(audioPath, start_t, end_t):
     time_s, time_e = pathInd2Time(start_ind, end_ind)
     print("calculated time starts at:", time_s)
     print("calculated time ends at:", time_e)
+    plot(d_matrix, path)
 
-    # Plotting
-    plt.subplot(2,1,1)
-    plt.imshow(d_matrix, origin='lower', aspect='auto')
-    # plt.plot(path[:, 1], path[:, 0], color='r')
-    plt.clim([0, np.max(d_matrix)])
-    plt.colorbar()
-    plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
-    plt.xlabel('Full')
-    plt.ylabel('Subsequence')
+def evaluation(audioPath_ref, audioPath_test, start_t, end_t):
+    fs, audio_ref = ToolReadAudio(audioPath_ref)
+    fs, audio_test = ToolReadAudio(audioPath_test)
+    audio_frame = audio_test[math.ceil(start_t*fs): math.ceil(end_t*fs)]
 
-    plt.subplot(2,1,2)
-    plt.imshow(d_matrix, origin='lower', aspect='auto')
-    plt.plot(path[:, 1], path[:, 0], color='r')
-    plt.clim([0, np.max(d_matrix)])
-    plt.colorbar()
-    plt.title('Subsequence - Lowest Cost Path (Distance Matrix)')
-    plt.xlabel('Full')
-    plt.ylabel('Subsequence')
+    chromagram_ref = chroma(audio_ref, sr=fs)
+    chromagram_frame = chroma(audio_frame, sr=fs)
 
-    plt.tight_layout()
-    plt.show()
-
+    d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
+    c_matrix = Cost_matrix(chromagram_frame,chromagram_ref) 
+    path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
+    time_s, time_e = pathInd2Time(start_ind, end_ind)
+    print("calculated time starts at:", time_s)
+    print("calculated time ends at:", time_e)
+    plot(d_matrix, path)
 
 csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
-ref_track = "pid9072-01"
-audioPath = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
-start_t, end_t = readCSV(csv_filepath, ref_track, 25, 49)
-self_evaluation(audioPath, start_t, end_t)
+# trackName = "pid52932-01"
+trackName = "pid9048-01"
+trackName_ref = "pid9072-01"
+audioPath_ref = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
+# audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid52932-01.wav"
+audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid9048-01.wav"
+start_t, end_t = readCSV(csv_filepath, trackName, 25, 49)
+# self_evaluation(audioPath_ref, start_t, end_t)
+evaluation(audioPath_ref, audioPath_test, start_t, end_t)
