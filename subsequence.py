@@ -173,7 +173,7 @@ def modified_DTW(matrix, runAll=True):
             X[i] = path_np[i][0]
             Y[i] = path_np[i][1]      
         result = linregress(X,Y)
-        print(result.slope)
+        print('Path Slope: ', result.slope)
 
         max_vec = np.amax(path_np, axis=0)
         start_ind = m
@@ -213,7 +213,7 @@ def plot(d_matrix, path):
     plt.tight_layout()
     plt.show()
 
-# # Audio Test:
+# # Audio Test for checking Modified DTW
 # file = 'Assignments/7100 Research (Local File)/Subsequence(pid9048-01_bip).wav'
 # file2 = "Assignments/7100 Research (Local File)/Full(pid1263-01_bip).wav" #ref
 # chromaVec = featVector(file)
@@ -236,7 +236,7 @@ def plot(d_matrix, path):
 
 # Save the time(sec) value for the frame
 # Use the subsequence algorithm to find the frame in other tracks (path index)
-# Convert the subsequence path index to time(sec) and 
+# Convert the subsequence path index to time(sec)
 
 def readCSV(filepath, trackName, start_ind, end_ind, trackName_ref="pid9072-01"):
     import csv
@@ -265,8 +265,9 @@ def readCSV(filepath, trackName, start_ind, end_ind, trackName_ref="pid9072-01")
     print("%s starting time: %f" %(trackName, start_t))
     print("%s ending time: %f" %(trackName, end_t))
 
-    return start_t, end_t
+    return start_t, end_t, start_GT, end_GT
 
+# Evaluation using same audio
 def self_evaluation(audioPath, start_t, end_t):
     fs, audio_ref = ToolReadAudio(audioPath)
     audio_frame = audio_ref[math.ceil(start_t*fs): math.ceil(end_t*fs)]
@@ -282,29 +283,51 @@ def self_evaluation(audioPath, start_t, end_t):
     print("calculated time ends at:", time_e)
     plot(d_matrix, path)
 
-def evaluation(audioPath_ref, audioPath_test, start_t, end_t):
-    fs, audio_ref = ToolReadAudio(audioPath_ref)
-    fs, audio_test = ToolReadAudio(audioPath_test)
-    audio_frame = audio_test[math.ceil(start_t*fs): math.ceil(end_t*fs)]
+# Evaluation Pipline
+def evaluation(AudioFolder, TrackName_ref, csv_filepath):
+    starting_ind_csv = 169
+    ending_ind_csv = 195
+    audioName_vec = []
 
-    chromagram_ref = chroma(audio_ref, sr=fs)
-    chromagram_frame = chroma(audio_frame, sr=fs)
+    import os
+    for file in os.listdir(AudioFolder):
+        audioPath_test = AudioFolder + '/' + file
+        audioPath_ref = AudioFolder + '/' + TrackName_ref + '.wav' # Put Reference Track here
+        audioName = file.split('.')[0] # Audio name without '.wav'
+        audioName_vec.append(audioName)
 
-    d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
-    c_matrix = Cost_matrix(chromagram_frame,chromagram_ref) 
-    path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
-    time_s, time_e = pathInd2Time(start_ind, end_ind)
-    print("calculated time starts at:", time_s)
-    print("calculated time ends at:", time_e)
-    plot(d_matrix, path)
+        # Get the start time and end time from the csv file for both the ground truth and 
+        start_t, end_t, start_GT, end_GT = readCSV(csv_filepath, audioName, starting_ind_csv, ending_ind_csv)
+        
+        fs, audio_ref = ToolReadAudio(audioPath_ref)
+        fs, audio_test = ToolReadAudio(audioPath_test)
+        audio_frame = audio_test[math.ceil(start_t*fs): math.ceil(end_t*fs)] # cuts different recordings using different start_t & end_t
 
-csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
-# trackName = "pid52932-01"
-trackName = "pid9048-01"
-trackName_ref = "pid9072-01"
-audioPath_ref = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
-# audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid52932-01.wav"
-audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid9048-01.wav"
-start_t, end_t = readCSV(csv_filepath, trackName, 25, 49)
+        chromagram_ref = chroma(audio_ref, sr=fs)
+        chromagram_frame = chroma(audio_frame, sr=fs)
+        
+        d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
+        c_matrix = Cost_matrix(chromagram_frame,chromagram_ref) 
+        path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
+        time_s, time_e = pathInd2Time(start_ind, end_ind)
+        print("calculated time starts at:", time_s)
+        print("calculated time ends at:", time_e)
+        print("\n")
+    print(audioName_vec)
+
+
+# csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
+# # trackName = "pid52932-01"
+# trackName = "pid9048-01"
+# trackName_ref = "pid9072-01"
+# audioPath_ref = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
+# # audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid52932-01.wav"
+# audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid9048-01.wav"
+# start_t, end_t = readCSV(csv_filepath, trackName, 25, 49)
 # self_evaluation(audioPath_ref, start_t, end_t)
-evaluation(audioPath_ref, audioPath_test, start_t, end_t)
+# evaluation(audioPath_ref, audioPath_test, start_t, end_t)
+
+AudioFolder = "Assignments/7100 Research (Local File)/mazurka06-1"
+TrackName_ref = "pid9072-01"
+csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
+evaluation(AudioFolder, TrackName_ref, csv_filepath)
