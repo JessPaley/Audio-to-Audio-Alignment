@@ -267,6 +267,11 @@ def readCSV(filepath, trackName, start_ind, end_ind, trackName_ref="pid9072-01")
 
     return start_t, end_t, start_GT, end_GT
 
+def writeTxt(starting_ind_csv, ending_ind_csv, start_GT, end_GT, lines):
+    file = open('index %s to %s' %(starting_ind_csv, ending_ind_csv), 'w')
+    file.write("GroundTruth %f %f\n" %(start_GT, end_GT))
+    file.writelines(lines)
+
 # Evaluation using same audio
 def self_evaluation(audioPath, start_t, end_t):
     fs, audio_ref = ToolReadAudio(audioPath)
@@ -284,10 +289,9 @@ def self_evaluation(audioPath, start_t, end_t):
     plot(d_matrix, path)
 
 # Evaluation Pipline
-def evaluation(AudioFolder, TrackName_ref, csv_filepath):
-    starting_ind_csv = 169
-    ending_ind_csv = 195
+def evaluation(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv_filepath):
     audioName_vec = []
+    lines = []
 
     import os
     for file in os.listdir(AudioFolder):
@@ -297,7 +301,7 @@ def evaluation(AudioFolder, TrackName_ref, csv_filepath):
         audioName_vec.append(audioName)
 
         # Get the start time and end time from the csv file for both the ground truth and 
-        start_t, end_t, start_GT, end_GT = readCSV(csv_filepath, audioName, starting_ind_csv, ending_ind_csv)
+        start_t, end_t, start_GT, end_GT = readCSV(csv_filepath, audioName, starting_ind_csv, ending_ind_csv, trackName_ref=TrackName_ref)
         
         fs, audio_ref = ToolReadAudio(audioPath_ref)
         fs, audio_test = ToolReadAudio(audioPath_test)
@@ -312,8 +316,13 @@ def evaluation(AudioFolder, TrackName_ref, csv_filepath):
         time_s, time_e = pathInd2Time(start_ind, end_ind)
         print("calculated time starts at:", time_s)
         print("calculated time ends at:", time_e)
+        line = audioName+' '+str(time_s)+' '+str(time_e)+'\n'
+        lines.append(line)
         print("\n")
     print(audioName_vec)
+    print(lines)
+    writeTxt(starting_ind_csv, ending_ind_csv, start_GT, end_GT, lines)
+    return starting_ind_csv, ending_ind_csv, start_GT, end_GT, time_s, time_e
 
 
 # csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
@@ -327,7 +336,9 @@ def evaluation(AudioFolder, TrackName_ref, csv_filepath):
 # self_evaluation(audioPath_ref, start_t, end_t)
 # evaluation(audioPath_ref, audioPath_test, start_t, end_t)
 
-AudioFolder = "Assignments/7100 Research (Local File)/mazurka06-1"
-TrackName_ref = "pid9072-01"
-csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
-evaluation(AudioFolder, TrackName_ref, csv_filepath)
+starting_ind_csv = 180
+ending_ind_csv = 218
+AudioFolder = "Assignments/7100 Research (Local File)/untitled folder"
+TrackName_ref = "pid1263-02"
+csv_filepath = "Assignments/7100 Research (Local File)/M06-2beat_time.csv"
+evaluation(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv_filepath)
