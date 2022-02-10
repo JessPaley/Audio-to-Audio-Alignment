@@ -240,7 +240,6 @@ def plot(d_matrix, path):
 
 def readCSV(filepath, trackName, start_ind, end_ind, trackName_ref="pid9072-01"):
     import csv
-    import os
 
     fields = []
     rows = []
@@ -288,7 +287,7 @@ def self_evaluation(audioPath, start_t, end_t):
     print("calculated time ends at:", time_e)
     plot(d_matrix, path)
 
-# Evaluation Pipline
+# Evaluating using different snippets from different track
 def evaluation(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv_filepath):
     audioName_vec = []
     lines = []
@@ -310,7 +309,7 @@ def evaluation(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv
         chromagram_ref = chroma(audio_ref, sr=fs)
         chromagram_frame = chroma(audio_frame, sr=fs)
         
-        d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
+        # d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
         c_matrix = Cost_matrix(chromagram_frame,chromagram_ref) 
         path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
         time_s, time_e = pathInd2Time(start_ind, end_ind)
@@ -324,21 +323,45 @@ def evaluation(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv
     writeTxt(starting_ind_csv, ending_ind_csv, start_GT, end_GT, lines)
     return starting_ind_csv, ending_ind_csv, start_GT, end_GT, time_s, time_e
 
+# Evaluating using the same snippet for all tracks
+def evaluation2(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv_filepath):
+    audioName_vec = []
+    lines = []
 
-# csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
-# # trackName = "pid52932-01"
-# trackName = "pid9048-01"
-# trackName_ref = "pid9072-01"
-# audioPath_ref = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
-# # audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid52932-01.wav"
-# audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid9048-01.wav"
-# start_t, end_t = readCSV(csv_filepath, trackName, 25, 49)
-# self_evaluation(audioPath_ref, start_t, end_t)
-# evaluation(audioPath_ref, audioPath_test, start_t, end_t)
+    import os
+    for file in os.listdir(AudioFolder):
+        audioPath_test = AudioFolder + '/' + file
+        audioPath_ref = AudioFolder + '/' + TrackName_ref + '.wav' # Put Reference Track here
+        audioName = file.split('.')[0] # Audio name without '.wav'
+        audioName_vec.append(audioName)
 
-starting_ind_csv = 180
-ending_ind_csv = 218
-AudioFolder = "Assignments/7100 Research (Local File)/untitled folder"
-TrackName_ref = "pid1263-02"
-csv_filepath = "Assignments/7100 Research (Local File)/M06-2beat_time.csv"
-evaluation(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv_filepath)
+        # Get the start time and end time from the csv file for both the ground truth and 
+        start_t, end_t, start_GT, end_GT = readCSV(csv_filepath, audioName, starting_ind_csv, ending_ind_csv, trackName_ref=TrackName_ref)
+        
+        fs, audio_ref = ToolReadAudio(audioPath_ref)
+        fs, audio_tracks = ToolReadAudio(audioPath_test)
+        audio_snippet = audio_ref[math.ceil(start_GT*fs): math.ceil(end_GT*fs)] # cuts out the snippet
+
+        chromagram_tracks = chroma(audio_tracks, sr=fs)
+        chromagram_snippet = chroma(audio_snippet, sr=fs)
+        
+        # d_matrix = Distance_matrix(chromagram_frame,chromagram_ref)
+        c_matrix = Cost_matrix(chromagram_snippet,chromagram_tracks) 
+        path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
+        time_s, time_e = pathInd2Time(start_ind, end_ind)
+        print("calculated time starts at:", time_s)
+        print("calculated time ends at:", time_e)
+        line = audioName+' '+str(start_t)+' '+str(end_t)+' '+str(time_s)+' '+str(time_e)+'\n'
+        lines.append(line)
+        print("\n")
+    print(audioName_vec)
+    print(lines)
+    writeTxt(starting_ind_csv, ending_ind_csv, start_GT, end_GT, lines)
+    return starting_ind_csv, ending_ind_csv, start_GT, end_GT, time_s, time_e
+
+starting_ind_csv = 169
+ending_ind_csv = 195
+AudioFolder = "Assignments/7100 Research (Local File)/mazurka06-1"
+TrackName_ref = "pid9072-01" #pid9176-02, pid9072-01
+csv_filepath = "Assignments/7100 Research (Local File)/M06-1beat_time.csv"
+evaluation2(starting_ind_csv, ending_ind_csv, AudioFolder, TrackName_ref, csv_filepath)
