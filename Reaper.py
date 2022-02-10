@@ -6,6 +6,7 @@ def main():
     track2 = RPR_GetTrack(0, 1)
     clip1 = RPR_GetMediaItem(0, 0)
     clip2 = RPR_GetMediaItem(0, 1)
+    myTake = RPR_GetTake(clip2, 0)
     # use DTW
 
     # file1 = open('./MazurkaCSVs/M06-1beat_time.csv', 'r')
@@ -19,9 +20,10 @@ def main():
     #     referenceTimes.append(beatData[3])
     #     secondaryTrackTimes.append(beatData[5])
 
-    for i in secondaryTrackTimes:
-      RPR_SetTakeStretchMarker(clip2, -1, i, 0)
-    
+    for i in range(0, len(secondaryTrackTimes)):
+      output = RPR_SetTakeStretchMarker(myTake, -1, secondaryTrackTimes[i], referenceTimes[i])
+     
+        
 
    
 
