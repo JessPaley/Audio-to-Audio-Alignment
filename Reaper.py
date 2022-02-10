@@ -7,9 +7,20 @@ def main():
     clip1 = RPR_GetMediaItem(0, 0)
     clip2 = RPR_GetMediaItem(0, 1)
     # use DTW
-    testArray = [1, 2, 3] # beat alignment from DTW
-    for i in testArray:
-      RPR_SetTakeStretchMarker(clip2, i, 0, 0)
+
+    # file1 = open('./MazurkaCSVs/M06-1beat_time.csv', 'r')
+    # lines = file1.readLines()
+    referenceTimes = [4.435011299999999, 5.13161, 5.893083900000001, 6.3661451, 7.0102268]
+    secondaryTrackTimes = [3.8777324, 4.7600907, 5.553083900000001, 6.066145099999999, 6.6702268]
+
+
+    # for i in lines:
+    #     beatData = i.split()
+    #     referenceTimes.append(beatData[3])
+    #     secondaryTrackTimes.append(beatData[5])
+
+    for i in secondaryTrackTimes:
+      RPR_SetTakeStretchMarker(clip2, -1, i, 0)
     
 
    
