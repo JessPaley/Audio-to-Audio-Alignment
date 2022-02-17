@@ -244,48 +244,48 @@ def MAfilter(signal, windowSize):
     filtered_signal_test = []
     for i in range(0, len(signal)-windowSize+1):
         ind = np.sum(signal[i:i+windowSize])/windowSize
-        filtered_signal_test.append(ind)
+        filtered_signal_test.append(round(ind,2))
     return filtered_signal, filtered_signal_test
 
+def output(audioPath_ref, audioPath_test, start_t, end_t):
+    fs, audio_ref = ToolReadAudio(audioPath_ref)
+    fs, audio_tracks = ToolReadAudio(audioPath_test)
+    audio_snippet = audio_ref[math.ceil(start_t*fs): math.ceil(end_t*fs)] # cuts out the snippet
 
-# file = 'Assignments/7100 Research (Local File)/Old Test Audio/Subsequence(pid9048-01_bip).wav'
-# file2 = "Assignments/7100 Research (Local File)/Old Test Audio/Full(pid1263-01_bip).wav" #ref
-# chromaVec = featVector(file)
-# chromaVec2 = featVector(file2) #ref
+    chromagram_tracks = chroma(audio_tracks, sr=fs)
+    chromagram_snippet = chroma(audio_snippet, sr=fs)
 
-# d_matrix = Distance_matrix(chromaVec,chromaVec2)
-# c_matrix = Cost_matrix(chromaVec,chromaVec2)
+    d_matrix = Distance_matrix(chromagram_snippet,chromagram_tracks)
+    c_matrix = Cost_matrix(chromagram_snippet,chromagram_tracks)
+    path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
+    # plot(d_matrix, path)
+    time4ref, time4other = pathInd2Time(path, hop_len=512, fs=44100)
+
+    # test = [1,2,3,4,5,6,7,8,9,10]
+    filtered_signal, filtered_signal_test = MAfilter(time4ref, 128)
+    filtered_signal_2, filtered_signal_test_2 = MAfilter(time4other, 128)
+
+    print(filtered_signal_test)
+    print(filtered_signal_test_2)
+
 
 audioPath_ref = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
 audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid9063-01.wav"
+# Select time to cut the clip from the audioPath_test audio
 start_t = 133.2
 end_t = 152.6
-fs, audio_ref = ToolReadAudio(audioPath_ref)
-fs, audio_tracks = ToolReadAudio(audioPath_test)
-audio_snippet = audio_ref[math.ceil(start_t*fs): math.ceil(end_t*fs)] # cuts out the snippet
+output(audioPath_ref, audioPath_test, start_t, end_t)
 
-chromagram_tracks = chroma(audio_tracks, sr=fs)
-chromagram_snippet = chroma(audio_snippet, sr=fs)
 
-d_matrix = Distance_matrix(chromagram_snippet,chromagram_tracks)
-c_matrix = Cost_matrix(chromagram_snippet,chromagram_tracks)
-path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
-# plot(d_matrix, path)
-time4ref, time4other = pathInd2Time(path, hop_len=512, fs=44100)
-
-# test = [1,2,3,4,5,6,7,8,9,10]
-filtered_signal, filtered_signal_test = MAfilter(time4ref, 128)
-filtered_signal_2, filtered_signal_test_2 = MAfilter(time4other, 128)
-
-# Plot
-plt.subplot(1,2,1)
-plt.plot(time4ref, time4other)
-plt.title("Original")
-plt.xlabel("Reference Track Time")
-plt.ylabel("Subsequence Time")
-plt.subplot(1,2,2)
-plt.plot(filtered_signal, filtered_signal_2)
-plt.title("Filtered")
-plt.xlabel("Reference Track Time")
-plt.ylabel("Subsequence Time")
-plt.show()
+# # Plot
+# plt.subplot(1,2,1)
+# plt.plot(time4ref, time4other)
+# plt.title("Original")
+# plt.xlabel("Reference Track Time")
+# plt.ylabel("Subsequence Time")
+# plt.subplot(1,2,2)
+# plt.plot(filtered_signal, filtered_signal_2)
+# plt.title("Filtered")
+# plt.xlabel("Reference Track Time")
+# plt.ylabel("Subsequence Time")
+# plt.show()
