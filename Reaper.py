@@ -15,7 +15,8 @@ def main():
     referenceTimes = [4.435011299999999, 5.13161, 5.893083900000001, 6.3661451, 7.0102268]
     secondaryTrackTimes = [3.8777324, 4.7600907, 5.553083900000001, 6.066145099999999, 6.6702268]
 
-    RPR_SetMediaItemPosition(clip3, 5, True) # position in seconds
+    subsequenceStartPosition = 0  # position in seconds
+    RPR_SetMediaItemPosition(clip3, subsequenceStartPosition, True)
 
 
     for i in range(0, len(secondaryTrackTimes)):
@@ -29,6 +30,4 @@ main()
 
 # move start of subsequence clip to correct location
 # currently assumes there is one media item on each track
-# use stretch markers for each beat onset datum
 # align to first track
-# handle multiple items on a track?
