@@ -267,15 +267,36 @@ def output(audioPath_ref, audioPath_test, start_t, end_t):
 
     print(filtered_signal_test)
     print(filtered_signal_test_2)
+    return time4ref, time4other, filtered_signal_test, filtered_signal_test_2
+
+### CSV Writer ###
+def writeCSV(audioPath_ref, audioPath_test, filtered_ref, filtered_test):
+    ref_Name = audioPath_ref.split("/")[-1]
+    test_Name = audioPath_test.split("/")[-1]
+    
+    import csv
+
+    fields = [ref_Name, test_Name]
+    rows_ref = np.array(filtered_ref).reshape((len(filtered_ref),1))
+    rows_test = np.array(filtered_test).reshape((len(filtered_test),1))
+    rows = np.concatenate((rows_ref,rows_test), axis=1)
+    
+    filename = "timestamps.csv"
+    with open(filename,'w') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(fields)
+        csvwriter.writerows(rows)
 
 
-audioPath_ref = "Assignments/7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
-audioPath_test = "Assignments/7100 Research (Local File)/mazurka06-1/pid9063-01.wav"
+
+audioPath_ref = "7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
+audioPath_test = "7100 Research (Local File)/mazurka06-1/pid9063-01.wav"
+
 # Select time to cut the clip from the audioPath_test audio
 start_t = 133.2
 end_t = 152.6
-output(audioPath_ref, audioPath_test, start_t, end_t)
-
+time4ref,time4other,filtered_ref,filtered_test = output(audioPath_ref, audioPath_test, start_t, end_t)
+writeCSV(audioPath_ref, audioPath_test, filtered_ref, filtered_test)
 
 # # Plot
 # plt.subplot(1,2,1)
@@ -284,7 +305,7 @@ output(audioPath_ref, audioPath_test, start_t, end_t)
 # plt.xlabel("Reference Track Time")
 # plt.ylabel("Subsequence Time")
 # plt.subplot(1,2,2)
-# plt.plot(filtered_signal, filtered_signal_2)
+# plt.plot(filtered_ref, filtered_test)
 # plt.title("Filtered")
 # plt.xlabel("Reference Track Time")
 # plt.ylabel("Subsequence Time")
