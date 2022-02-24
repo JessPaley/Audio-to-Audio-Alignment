@@ -178,12 +178,16 @@ def modified_DTW(matrix, runAll=True):
 def pathInd2Time(path, hop_len=512, fs=44100):
     time4ref = []
     time4other = []
+    refPath = []
+    otherPath = []
     for i in range(0, len(path)):
         sample_ref = librosa.frames_to_samples(path[i][1], hop_length=hop_len)
         sample_other = librosa.frames_to_samples(path[i][0], hop_length=hop_len)
         time4ref.append(sample_ref/fs)
         time4other.append(sample_other/fs)
-    return time4ref, time4other
+        refPath.append(path[i][1])
+        otherPath.append(path[i][0])
+    return time4ref, time4other, refPath, otherPath
 
 ### Create Plot ###
 def plot(d_matrix, path):
@@ -237,6 +241,27 @@ def readCSV(filepath, trackName, start_ind, end_ind, trackName_ref="pid9072-01")
 
     return start_t, end_t, start_GT, end_GT
 
+### Moving Average Slope ###
+def averageSlope(otherPath, refPath, windowSize):
+    filtered_x = []
+    filtered_y = []
+    all_slope = []
+    for i in range(0, len(refPath)-windowSize+1):
+        win_a = refPath[i:i+windowSize]
+        win_b = otherPath[i:i+windowSize]
+        slope, intercept, r, p, se = linregress(win_a, win_b)
+        # slope, intercept = np.polyfit(win_a,win_b,1)
+        # c = win_b[0]
+
+        x = win_a[int(windowSize/2)]
+        y = slope * x + intercept
+        # filtered_x.append(x)
+        filtered_x.append(librosa.frames_to_samples(x, hop_length=windowSize)/44100)
+        # filtered_y.append(slope * x + intercept)
+        filtered_y.append(librosa.frames_to_samples(y, hop_length=windowSize)/44100)
+        all_slope.append(slope)
+    return filtered_x, filtered_y
+
 ### Moving Average Filter ###
 def MAfilter(signal, windowSize):
     filtered_signal = np.convolve(signal, np.ones(windowSize), 'valid') / windowSize
@@ -258,16 +283,17 @@ def output(audioPath_ref, audioPath_test, start_t, end_t):
     d_matrix = Distance_matrix(chromagram_snippet,chromagram_tracks)
     c_matrix = Cost_matrix(chromagram_snippet,chromagram_tracks)
     path, start_ind, end_ind = modified_DTW(c_matrix, runAll=False)
-    # plot(d_matrix, path)
-    time4ref, time4other = pathInd2Time(path, hop_len=512, fs=44100)
 
-    # test = [1,2,3,4,5,6,7,8,9,10]
-    filtered_signal, filtered_signal_test = MAfilter(time4ref, 128)
-    filtered_signal_2, filtered_signal_test_2 = MAfilter(time4other, 128)
+    time4ref, time4other, refPath, otherPath = pathInd2Time(path, hop_len=512, fs=44100)
 
-    print(filtered_signal_test)
-    print(filtered_signal_test_2)
-    return time4ref, time4other, filtered_signal_test, filtered_signal_test_2
+    # # Moving Average Filter
+    # filtered_signal, filtered_signal_test = MAfilter(time4ref, 128)
+    # filtered_signal_2, filtered_signal_test_2 = MAfilter(time4other, 128)
+
+    # Average Slope Filter
+    filtered_x, filtered_y = averageSlope(otherPath, refPath, 512)
+
+    return time4ref, time4other, filtered_x, filtered_y, path
 
 ### CSV Writer ###
 def writeCSV(audioPath_ref, audioPath_test, filtered_ref, filtered_test):
@@ -295,18 +321,21 @@ audioPath_test = "7100 Research (Local File)/mazurka06-1/pid9063-01.wav"
 # Select time to cut the clip from the audioPath_test audio
 start_t = 133.2
 end_t = 152.6
-time4ref,time4other,filtered_ref,filtered_test = output(audioPath_ref, audioPath_test, start_t, end_t)
-writeCSV(audioPath_ref, audioPath_test, filtered_ref, filtered_test)
+time4ref,time4other,filtered_x, filtered_y,path = output(audioPath_ref, audioPath_test, start_t, end_t)
+writeCSV(audioPath_ref, audioPath_test, filtered_x, filtered_y)
 
-# # Plot
-# plt.subplot(1,2,1)
-# plt.plot(time4ref, time4other)
-# plt.title("Original")
-# plt.xlabel("Reference Track Time")
-# plt.ylabel("Subsequence Time")
-# plt.subplot(1,2,2)
-# plt.plot(filtered_ref, filtered_test)
-# plt.title("Filtered")
-# plt.xlabel("Reference Track Time")
-# plt.ylabel("Subsequence Time")
-# plt.show()
+# print(time4ref,'\n')
+# print(time4other)
+
+# Plot
+plt.subplot(1,2,1)
+plt.plot(time4ref, time4other)
+plt.title("Original")
+plt.xlabel("Reference Track Time")
+plt.ylabel("Subsequence Time")
+plt.subplot(1,2,2)
+plt.plot(filtered_x, filtered_y)
+plt.title("Filtered")
+plt.xlabel("Reference Track Time")
+plt.ylabel("Subsequence Time")
+plt.show()
