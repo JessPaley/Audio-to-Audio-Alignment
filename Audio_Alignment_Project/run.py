@@ -6,6 +6,7 @@ import FileDirectory as c
 def run():
     import os
     import numpy as np
+    out = []
     for file in os.listdir(c.AudioFolder):
         audioPath_snippet = c.AudioFolder + '/' + file
         audioPath_ref = c.ReferenceAudio # Put Reference Track here
@@ -38,5 +39,9 @@ def run():
         # # Output csv File
         # f.writeCSV(c.ReferenceAudio, c.AudioSnippet, filtered_x, filtered_y)
 
+
+        out.append(np.linspace(filtered_x[0],filtered_x[-1],50)) # multidimensional array
+
+    return out
 # if __name__ == '__main__':
 run()
