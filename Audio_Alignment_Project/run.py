@@ -6,12 +6,18 @@ import FileDirectory as c
 def run():
     import os
     import numpy as np
-    out = []
+    audioName_list = []
+    reference_time = []
+    snippet_time = []
+
     for file in os.listdir(c.AudioFolder):
         audioPath_snippet = c.AudioFolder + '/' + file
         audioPath_ref = c.ReferenceAudio # Put Reference Track here
         audioName = file.split('.')[0] # Audio name without '.wav'
-        if audioPath_snippet.split('.')[-1] == 'DS_Store':
+        print(audioPath_snippet)
+        # if audioPath_snippet.split('.')[-1] in ['DS_Store','reapeaks']:
+        #     continue
+        if audioPath_snippet.split('.')[-1] != 'wav':
             continue
 
         fs, audio_ref = f.ToolReadAudio(c.ReferenceAudio)
@@ -30,18 +36,26 @@ def run():
         # filtered_signal, filtered_signal_test = f.MAfilter(time4ref, 128)
         # filtered_signal_2, filtered_signal_test_2 = f.MAfilter(time4other, 128)
 
-        # Average Slope Filter
+        # Average Slope Filter, x = timestamps for reference, y = timestamps for snippet
         filtered_x, filtered_y = f.averageSlope(otherPath, refPath, 512)
-        print(audioName)
-        print("Start: {}; End: {}" .format(filtered_x[0],filtered_x[-1]))
-        print("Evenly Spaced: ", np.linspace(filtered_x[0],filtered_x[-1],50))
+
+        audioName_list.append(audioName)
+        reference_time.append(filtered_x)
+        snippet_time.append(filtered_y)
+
+        # print(audioName)
+        # print("Start: {}; End: {}" .format(filtered_x[0],filtered_x[-1]))
+        # print("Evenly Spaced: ", np.linspace(filtered_x[0],filtered_x[-1],50))
         
         # # Output csv File
         # f.writeCSV(c.ReferenceAudio, c.AudioSnippet, filtered_x, filtered_y)
+    # print(audioName_list)
+    # print(reference_time)
+    # print(snippet_time)
+    
+    # Output csv File
+    f.csv_writer_row(audioName_list, reference_time)
+    return audioName, reference_time, snippet_time
 
-
-        out.append(np.linspace(filtered_x[0],filtered_x[-1],50)) # multidimensional array
-
-    return out
-# if __name__ == '__main__':
-run()
+if __name__ == '__main__':
+    run()

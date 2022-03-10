@@ -66,6 +66,7 @@ def Cost_matrix(sig1, sig2):
     row = c_matrix.shape[1]
 
     # c_matrix[0, 1:] = Calculate First Row
+    # Modified for subsequence search
     c_matrix[0,:] = d_matrix[0,:]
     
     # c_matrix[1:, 0] = Calculate First Column
@@ -231,3 +232,12 @@ def writeCSV(audioPath_ref, audioPath_test, filtered_ref, filtered_test):
         csvwriter.writerow(fields)
         csvwriter.writerows(rows)
 
+def csv_writer_row(audioName_list, reference_time):
+    import csv
+    filename = "timestamps.csv"
+    with open(filename,'w') as csvfile:
+        fields = audioName_list
+        writer = csv.writer(csvfile)
+        writer.writerow(fields)
+        writer.writerows(reference_time)
+    
