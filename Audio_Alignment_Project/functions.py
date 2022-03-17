@@ -185,17 +185,22 @@ def pathInd2Time(path, hop_len=512, fs=44100):
 
 ### Moving Average Slope ###
 def averageSlope(otherPath, refPath, windowSize):
+    # Sort path list in order
+    otherPath = np.sort(otherPath)
+    refPath = np.sort(refPath)
+
     filtered_x = []
     filtered_y = []
     all_slope = []
-    for i in range(0, len(refPath)-windowSize+1):
+    for i in range(1, len(refPath)-windowSize+1):
         win_a = refPath[i:i+windowSize]
         win_b = otherPath[i:i+windowSize]
         slope, intercept, r, p, se = linregress(win_a, win_b)
         # slope, intercept = np.polyfit(win_a,win_b,1)
         # c = win_b[0]
 
-        x = win_a[int(windowSize/2)]
+        # x = win_a[int(windowSize/2)]
+        x = win_a[0]
         y = slope * x + intercept
         # filtered_x.append(x)
         filtered_x.append(librosa.frames_to_samples(x, hop_length=windowSize)/44100)
@@ -206,13 +211,13 @@ def averageSlope(otherPath, refPath, windowSize):
 
 ### Moving Average Filter ###
 def MAfilter(signal, windowSize):
-    filtered_signal = np.convolve(signal, np.ones(windowSize), 'valid') / windowSize
+    # filtered_signal = np.convolve(signal, np.ones(windowSize), 'valid') / windowSize
     
-    filtered_signal_test = []
+    filtered_signal = []
     for i in range(0, len(signal)-windowSize+1):
         ind = np.sum(signal[i:i+windowSize])/windowSize
-        filtered_signal_test.append(round(ind,2))
-    return filtered_signal, filtered_signal_test
+        filtered_signal.append(round(ind,5))
+    return filtered_signal
 
 ### CSV Writer ###
 def writeCSV(audioPath_ref, audioPath_test, filtered_ref, filtered_test):
