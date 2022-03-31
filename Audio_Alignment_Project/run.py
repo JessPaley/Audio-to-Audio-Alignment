@@ -27,8 +27,9 @@ def run():
         chromagram_snippet = f.chroma(audio_snippet, sr=fs)
 
         # d_matrix = f.Distance_matrix(chromagram_snippet,chromagram_ref)
-        c_matrix = f.Cost_matrix(chromagram_snippet,chromagram_ref)
-        path, start_ind, end_ind = f.modified_DTW(c_matrix, runAll=False)
+        c_matrix = f.Cost_matrix_step(chromagram_snippet,chromagram_ref)
+        # path, start_ind, end_ind = f.modified_DTW(c_matrix, runAll=False)
+        path, start_ind, end_ind = f.modified_DTW_step(c_matrix)
 
         time4ref, time4other, refPath, otherPath = f.pathInd2Time(path, hop_len=512, fs=44100)
 
@@ -42,16 +43,6 @@ def run():
         audioName_list.append(audioName)
         reference_time.append(filtered_x)
         snippet_time.append(filtered_y)
-
-        # print(audioName)
-        # print("Start: {}; End: {}" .format(filtered_x[0],filtered_x[-1]))
-        # print("Evenly Spaced: ", np.linspace(filtered_x[0],filtered_x[-1],50))
-        
-        # # Output csv File
-        # f.writeCSV(c.ReferenceAudio, c.AudioSnippet, filtered_x, filtered_y)
-    # print(audioName_list)
-    # print(reference_time)
-    # print(snippet_time)
     
     # Output csv File
     f.csv_writer_row(audioName_list, reference_time)

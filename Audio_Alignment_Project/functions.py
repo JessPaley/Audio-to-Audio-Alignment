@@ -4,6 +4,7 @@ from scipy.io.wavfile import read as wavread
 from scipy.spatial.distance import pdist, cdist
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
+import math
 
 ### Read Audio ###
 def ToolReadAudio(cAudioFilePath):
@@ -81,9 +82,26 @@ def Cost_matrix(sig1, sig2):
             minvalue = min(c_matrix[i-1,j-1], c_matrix[i,j-1], c_matrix[i-1,j])
             c_matrix[i,j] = d_matrix[i, j] + minvalue
     return c_matrix
+def Cost_matrix_step(sig1, sig2):
+    d_matrix = Distance_matrix(sig1, sig2)
+    column, row = d_matrix.shape
+    c_matrix = np.zeros((column+1, row+2))
+    c_matrix[0:1, :] = np.inf
+    c_matrix[:, 0:2] = np.inf
+
+    # c_matrix[0, 1:] = Calculate First Row
+    c_matrix[1,2:] = d_matrix[0,:]
+    
+    # Calculate Rest Matrix
+    for i in range(1, column):
+        for j in range(0, row):
+            minvalue = min(c_matrix[i-1+1,j-1+2], c_matrix[i-2+1,j-1+2], c_matrix[i-1+1,j-2+2])
+            c_matrix[i+1,j+2] = d_matrix[i, j] + minvalue
+    # c_matrix = c_matrix[1:,2:]
+    return c_matrix
 
 ### Calculate DTW Path ###
-def modified_DTW(matrix, runAll=True):
+def modified_DTW(matrix, runAll=False):
     N = matrix.shape[0] # Row
     M = matrix.shape[1] # Column
     if runAll==True:
@@ -167,7 +185,50 @@ def modified_DTW(matrix, runAll=True):
         end_ind = max_vec[1]
 
     return path_np, start_ind, end_ind
+def modified_DTW_step(matrix):
+    N = matrix.shape[0] # Row
+    M = matrix.shape[1] # Column
 
+    n = N - 1
+    m = np.argmin(matrix[-1, :]) # Locate the lowest cost index from distance matrix
+    path = [[n, m]]
+    while n > 0:
+        if m == 0:
+            # n = n-1
+            # m = 0
+            continue
+        else:
+            a_list = [matrix[n-1,m-1], matrix[n-1,m-1-1], matrix[n-1-1,m-1]]
+            minvalue = min(a_list)
+            min_index = a_list.index(minvalue)
+            if min_index == 0:
+                n = n - 1
+                m = m - 1
+            elif min_index == 1:
+                n = n - 1
+                m = m - 1 - 1
+            elif min_index == 2:
+                n = n - 1 - 1
+                m = m - 1
+        path.append([n,m])
+        path.reverse()
+    # path_np = np.flip(np.array(path))
+    path_np = np.array(path)
+
+    X = np.zeros(path_np.shape[0])
+    Y = np.zeros(path_np.shape[0])
+    for i in range(0, path_np.shape[0]):
+        X[i] = path_np[i][0]
+        Y[i] = path_np[i][1]      
+    result = linregress(X,Y)
+    print('Path Slope: ', result.slope)
+
+    max_vec = np.amax(path_np, axis=0)
+    start_ind = m
+    end_ind = max_vec[1]
+
+    return path_np, start_ind, end_ind
+       
 ### Convert path index to samples ###
 def pathInd2Time(path, hop_len=512, fs=44100):
     time4ref = []
@@ -188,25 +249,33 @@ def averageSlope(otherPath, refPath, windowSize):
     # Sort path list in order
     otherPath = np.sort(otherPath)
     refPath = np.sort(refPath)
+    
+    # Add zero in front to remove time shift
+    num_zero = math.ceil(windowSize/2)
+    otherPath = np.append([otherPath[0]]*num_zero,otherPath) # otherPath[0]
+    refPath = np.append([refPath[0]]*num_zero,refPath) # refPath[0]
 
     filtered_x = []
     filtered_y = []
-    all_slope = []
-    for i in range(1, len(refPath)-windowSize+1):
-        win_a = refPath[i:i+windowSize]
-        win_b = otherPath[i:i+windowSize]
-        slope, intercept, r, p, se = linregress(win_a, win_b)
-        # slope, intercept = np.polyfit(win_a,win_b,1)
-        # c = win_b[0]
-
-        # x = win_a[int(windowSize/2)]
-        x = win_a[0]
-        y = slope * x + intercept
-        # filtered_x.append(x)
-        filtered_x.append(librosa.frames_to_samples(x, hop_length=windowSize)/44100)
-        # filtered_y.append(slope * x + intercept)
-        filtered_y.append(librosa.frames_to_samples(y, hop_length=windowSize)/44100)
-        all_slope.append(slope)
+    for i in range(0, len(refPath)-num_zero-1):
+        if i > len(refPath)-windowSize-1:
+            y1 = otherPath[i]
+            y2 = otherPath[-1]
+            x1 = refPath[i]
+            x2 = refPath[-1]
+            slope = (y2-y1)/(x2-x1)
+        else:
+            y1 = otherPath[i]
+            y2 = otherPath[i+windowSize]
+            x1 = refPath[i]
+            x2 = refPath[i+windowSize]
+            slope = (y2-y1)/(x2-x1)
+        
+        ind_mid = math.ceil(windowSize/2)
+        x_mid = refPath[i:i+windowSize][ind_mid]
+        y = slope * ind_mid + y1
+        filtered_x.append(librosa.frames_to_samples(x_mid, hop_length=512)/44100)
+        filtered_y.append(librosa.frames_to_samples(y, hop_length=512)/44100)
     return filtered_x, filtered_y
 
 ### Moving Average Filter ###
