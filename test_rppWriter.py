@@ -24,25 +24,27 @@ def ToolReadAudio(cAudioFilePath):
     # audio = x
     return(samplerate, audio)
 
-project = reaper.Project()
-AudioFolder = 'Audio Snippet Folder' # Put audio folder directory here
+def rppWriter(AudioFolder,refAudio_dir):
+    project = reaper.Project()
+    AudioFolder = 'Audio Snippet Folder' # Put audio folder directory here
 
-for file in os.listdir(AudioFolder):
-    audioPath_snippet = AudioFolder + '/' + file
-    audioName = file.split('.')[0] # Audio name without '.wav'
+    for file in os.listdir(AudioFolder):
+        audioPath_snippet = AudioFolder + '/' + file
+        audioName = file.split('.')[0] # Audio name without '.wav'
 
-    if audioPath_snippet.split('.')[-1] != 'wav': # skip file that is not .wav
-        continue
+        if audioPath_snippet.split('.')[-1] != 'wav': # skip file that is not .wav
+            continue
 
-    fs, audioFile = ToolReadAudio(audioPath_snippet)
-    audio_length = audioFile.size / fs # Calculate the time of the audio file
-    print(audio_length)
+        fs, audioFile = ToolReadAudio(audioPath_snippet)
+        audio_length = audioFile.size / fs # Calculate the time of the audio file
+        print(audio_length)
 
-    Audio = reaper.Source(file = audioPath_snippet)
-    item = reaper.Item(Audio, length=audio_length, postion=0)
-    project.add(reaper.Track(item, name=audioName))
-
-project.write('test.rpp')
+        Audio = reaper.Source(file = audioPath_snippet)
+        item = reaper.Item(Audio, length=audio_length, position=0) # Able to change track position here
+        project.add(reaper.Track(item, name=audioName))
+    
+    project.write('test.rpp')
+    return
 
 
 ### Test for writing one track ###
