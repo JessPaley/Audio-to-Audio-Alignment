@@ -26,8 +26,16 @@ def ToolReadAudio(cAudioFilePath):
 
 def rppWriter(AudioFolder,refAudio_dir):
     project = reaper.Project()
-    AudioFolder = 'Audio Snippet Folder' # Put audio folder directory here
 
+    # Importing Ref Audio
+    fs, audioFile_ref = ToolReadAudio(refAudio_dir)
+    audioFile_ref_len = audioFile_ref.size / fs
+    Audio_ref = reaper.Source(file = refAudio_dir)
+    item_ref = reaper.Item(Audio_ref, length=audioFile_ref_len, position=0)
+    audioName = refAudio_dir.split('/')[-1]
+    project.add(reaper.Track(item_ref, name=audioName))
+
+    # Importing Snippets Folder
     for file in os.listdir(AudioFolder):
         audioPath_snippet = AudioFolder + '/' + file
         audioName = file.split('.')[0] # Audio name without '.wav'
@@ -37,7 +45,7 @@ def rppWriter(AudioFolder,refAudio_dir):
 
         fs, audioFile = ToolReadAudio(audioPath_snippet)
         audio_length = audioFile.size / fs # Calculate the time of the audio file
-        print(audio_length)
+        # print(audio_length)
 
         Audio = reaper.Source(file = audioPath_snippet)
         item = reaper.Item(Audio, length=audio_length, position=0) # Able to change track position here
@@ -45,6 +53,10 @@ def rppWriter(AudioFolder,refAudio_dir):
     
     project.write('test.rpp')
     return
+
+AudioFolder = 'Audio Snippet Folder' # Put audio folder directory here
+refAudio_dir = '7100 Research (Local File)/mazurka06-2/pid9090-01.wav'
+rppWriter(AudioFolder,refAudio_dir)
 
 
 ### Test for writing one track ###
