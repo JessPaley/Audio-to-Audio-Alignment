@@ -1,6 +1,6 @@
-ReferenceAudio = "7100 Research (Local File)/mazurka06-1/pid9072-01.wav"
+ReferenceAudio = "/Users/Owen/Desktop/MUSI-6201/Assignments/7100 Research (Local File)/mazurka06-2/pid9090-01.wav"
 AudioSnippet = "7100 Research (Local File)/Old Test Audio/pid9192 snippet.wav"
-AudioFolder = "Audio Snippet Folder"
+AudioFolder = "/Users/Owen/Desktop/MUSI-6201/Assignments/Audio_Snippet-02_quick"
 
 # ReferenceAudio = "../pid9072-01.wav"
 # AudioSnippet = "../pid9063-01.wav"

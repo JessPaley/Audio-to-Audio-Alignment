@@ -5,7 +5,6 @@ import FileDirectory as c
 
 def run():
     import os
-    import numpy as np
     audioName_list = []
     reference_time = []
     snippet_time = []
@@ -15,8 +14,6 @@ def run():
         audioPath_ref = c.ReferenceAudio # Put Reference Track here
         audioName = file.split('.')[0] # Audio name without '.wav'
         print(audioPath_snippet)
-        # if audioPath_snippet.split('.')[-1] in ['DS_Store','reapeaks']:
-        #     continue
         if audioPath_snippet.split('.')[-1] != 'wav':
             continue
 
@@ -33,10 +30,6 @@ def run():
 
         time4ref, time4other, refPath, otherPath = f.pathInd2Time(path, hop_len=512, fs=44100)
 
-        # # Moving Average Filter
-        # filtered_signal, filtered_signal_test = f.MAfilter(time4ref, 128)
-        # filtered_signal_2, filtered_signal_test_2 = f.MAfilter(time4other, 128)
-
         # Average Slope Filter, x = timestamps for reference, y = timestamps for snippet
         filtered_x, filtered_y = f.averageSlope(otherPath, refPath, 512)
 
@@ -46,6 +39,14 @@ def run():
     
     # Output csv File
     f.csv_writer_row(audioName_list, reference_time)
+
+    # Output Position Dictionary
+    pos_t = f.position_dict(audioName_list, reference_time)
+    print(pos_t)
+
+    # Create .rpp project
+    f.rppWriter(c.AudioFolder,c.ReferenceAudio,pos_t)
+
     return audioName, reference_time, snippet_time
 
 if __name__ == '__main__':

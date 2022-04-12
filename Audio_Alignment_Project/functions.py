@@ -138,8 +138,8 @@ def modified_DTW(matrix, runAll=False):
             result = linregress(X,Y)
 
             if abs(result.slope - 1) < 0.5:
-                print(result.slope)
-                print(np.amax(path_np, axis=0)[1])
+                # print(result.slope)
+                # print(np.amax(path_np, axis=0)[1])
                 max_vec = np.amax(path_np, axis=0)
                 start_ind = m
                 end_ind = max_vec[1]
@@ -221,7 +221,7 @@ def modified_DTW_step(matrix):
         X[i] = path_np[i][0]
         Y[i] = path_np[i][1]      
     result = linregress(X,Y)
-    print('Path Slope: ', result.slope)
+    # print('Path Slope: ', result.slope)
 
     max_vec = np.amax(path_np, axis=0)
     start_ind = m
@@ -279,6 +279,8 @@ def averageSlope(otherPath, refPath, windowSize):
     return filtered_x, filtered_y
 
 ### Moving Average Filter ###
+# filtered_signal, filtered_signal_test = f.MAfilter(time4ref, 128)
+# filtered_signal_2, filtered_signal_test_2 = f.MAfilter(time4other, 128)
 def MAfilter(signal, windowSize):
     # filtered_signal = np.convolve(signal, np.ones(windowSize), 'valid') / windowSize
     
@@ -305,7 +307,6 @@ def writeCSV(audioPath_ref, audioPath_test, filtered_ref, filtered_test):
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(fields)
         csvwriter.writerows(rows)
-
 def csv_writer_row(audioName_list, reference_time):
     import csv
     filename = "timestamps.csv"
@@ -314,4 +315,42 @@ def csv_writer_row(audioName_list, reference_time):
         writer = csv.writer(csvfile)
         writer.writerow(fields)
         writer.writerows(reference_time)
+
+def position_dict(audioName_list, reference_time):
+    pos_t = {}
+    for i in range(len(audioName_list)):
+        pos_t[audioName_list[i]] = reference_time[i][0]
+    return pos_t
+
+### .rpp Project Writer ###
+def rppWriter(AudioFolder,refAudio_dir,position_t):
+    import reathon.nodes as reaper
+    import os
+    project = reaper.Project()
+
+    # Importing Ref Audio
+    fs, audioFile_ref = ToolReadAudio(refAudio_dir)
+    audioFile_ref_len = audioFile_ref.size / fs
+    Audio_ref = reaper.Source(file = refAudio_dir)
+    item_ref = reaper.Item(Audio_ref, length=audioFile_ref_len, position=0)
+    audioName_ref = refAudio_dir.split('/')[-1]
+    project.add(reaper.Track(item_ref, name=audioName_ref))
+
+    # Importing Snippets Folder
+    for file in os.listdir(AudioFolder):
+        audioPath_snippet = AudioFolder + '/' + file
+        audioName = file.split('.')[0] # Audio name without '.wav'
+
+        if audioPath_snippet.split('.')[-1] != 'wav': # skip file that is not .wav
+            continue
+
+        fs, audioFile = ToolReadAudio(audioPath_snippet)
+        audio_length = audioFile.size / fs # Calculate the time of the audio file
+        # print(audio_length)
+
+        Audio = reaper.Source(file = audioPath_snippet)
+        item = reaper.Item(Audio, length=audio_length, position=position_t[audioName]) # Able to change track position here
+        project.add(reaper.Track(item, name=audioName))
     
+    project.write('aligned_project.rpp')
+    return
