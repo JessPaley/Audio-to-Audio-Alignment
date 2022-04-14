@@ -32,4 +32,3 @@ def rppWriter(AudioFolder,refAudio_dir,position_t):
     
     project.write('aligned_project.rpp')
     return
-
