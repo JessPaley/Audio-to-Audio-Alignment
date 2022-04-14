@@ -4,7 +4,7 @@ from test_rppWriter import rppWriter
 
 root = Tk()
 root.title('File Directory Input Helper')
-root.geometry('550x250')
+root.geometry('660x250')
 # root.filename = filedialog.askopenfilename(initialdir='/', title='Select Folder')
 
 # Function used in myButton command
@@ -32,15 +32,15 @@ def ButtonRun():
 
 # Creating a label widget
 mylabel = Label(root, text='File Directory Input Helper')
-mylabel2 = Label(root, text='Audio Snippet Folder')
-mylabel3 = Label(root, text='Reference Audio Track')
+mylabel2 = Label(root, text='Audio Snippet Folder \n (these files will be aligned to the main track)')
+mylabel3 = Label(root, text='Main Audio Track \n (the other files will be aligned to this one)')
 mylabel.grid(row=0, column=0)
 mylabel2.grid(row=1, column=0)
 mylabel3.grid(row=2, column=0)
 
 # Create Buttons
-myButton = Button(root, text='Choose', padx=25, command=ButtonClick1)
-myButton2 = Button(root, text='Choose', padx=25, command=ButtonClick2)
+myButton = Button(root, text='Select Folder', padx=25, command=ButtonClick1)
+myButton2 = Button(root, text='Select Main Track', padx=25, command=ButtonClick2)
 myButton3 = Button(root, text='Run', padx=50, command=ButtonRun)
 Snippet_dir_label = Entry(root,textvariable=SnippetPath)
 refAudio_dir_label = Entry(root,textvariable=refAudioPath)
