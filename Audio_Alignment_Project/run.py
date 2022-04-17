@@ -31,12 +31,18 @@ def run():
                 continue
             count += 1
         text.set("There are {} audio files found".format(count))
+        myButton3["state"] = "normal"
     def ButtonClick2():
         refAudio_directory =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("wav files","*.wav"),("all files","*.*")))
         refAudioPath.set(refAudio_directory)
+        if refAudio_directory == "":
+            myButton3["state"] = "disable"
+        else:
+            myButton3["state"] = "normal"
     def ButtonClick3():
         folder4output = filedialog.askdirectory()
         outputPath.set(folder4output)
+        text.set("Output location is set to\n{}".format(folder4output))
     def ButtonClick4():
         output_dir = outputPath.get()
         ReaperFilePath = '{}/aligned_project.rpp'.format(output_dir)
@@ -62,6 +68,7 @@ def run():
         
         # time.sleep(1) # Simulate doing something
         text.set("Reaper Project Created \n (click Open Project button to open Reaper)")
+        myButton5["state"] = "normal"
         return
 
     # Creating a label widget
@@ -80,9 +87,9 @@ def run():
     # Create Buttons and Entry Box
     myButton = Button(root, text='Select Folder', padx=25, command=ButtonClick1)
     myButton2 = Button(root, text='Select Main Track', padx=25, command=ButtonClick2)
-    myButton3 = Button(root, text='Run', padx=50, command=ButtonRun)
+    myButton3 = Button(root, text='Run', padx=50, command=ButtonRun, state='disable') 
     myButton4 = Button(root, text='Output Location', padx=25, command=ButtonClick3) # Open or choose Reaper file directory
-    myButton5 = Button(root, text='Open Project', padx=25, command=ButtonClick4) # Open or choose Reaper file directory
+    myButton5 = Button(root, text='Open Project', padx=25, command=ButtonClick4, state='disable') # Open or choose Reaper file directory
     Snippet_dir_label = Entry(root,textvariable=SnippetPath)
     refAudio_dir_label = Entry(root,textvariable=refAudioPath)
 
