@@ -1,7 +1,10 @@
 import functions as f
+import os
+from platform import system
+from subprocess import Popen, PIPE
 
 ### .rpp Project Writer ###
-def rppWriter(AudioFolder,refAudio_dir,position_t):
+def rppWriter(AudioFolder,refAudio_dir,output_dir,position_t):
     import reathon.nodes as reaper
     import os
     project = reaper.Project()
@@ -30,5 +33,19 @@ def rppWriter(AudioFolder,refAudio_dir,position_t):
         item = reaper.Item(Audio, length=audio_length, position=position_t[audioName]) # Able to change track position here
         project.add(reaper.Track(item, name=audioName))
     
-    project.write('aligned_project.rpp')
+    output_name = '{}/aligned_project.rpp'.format(output_dir)
+    project.write(output_name)
     return
+
+### File Opener ###
+def file_open(filePath):
+    # Find OS platform, different OS have different format
+    OS_platform = system().lower()
+    if 'windows' in OS_platform:
+        opener = 'start'
+    elif 'osx' in OS_platform or 'darwin' in OS_platform:
+        opener = 'open'
+    
+    opener_format = '{} {}'.format(opener, filePath)
+    subprocess = Popen(opener_format, stdout=PIPE, stderr=PIPE, shell=True)
+    return subprocess
