@@ -1,4 +1,4 @@
-# MUSI7100
+# MUSI7100 Capstone Project
 ## Audio to Audio Alignment Tool
 A tool that automatically analyzes the similarity between two different audio, and aligns them together using a dynamic time warping algorithm. The tool can take in multiple audio snippet recordings of a music piece and align them to the main track. The result will be output as a REAPER project with the main track and aligned audio snippet tracks. 
 
