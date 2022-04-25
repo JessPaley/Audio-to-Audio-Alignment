@@ -7,5 +7,5 @@ A tool that automatically analyzes the similarity between two different audio, a
 
 ## Usage
 - Locate `run.py` and run the python file. After running the file, a `File Directory Input Helper` GUI will display
-- Follow instructions on the GUI by each row and select the directory. The red text will show the status of 
+- Follow instructions on the GUI by each row and select the directory. The red text will show the status
 - The tool will automatically generator a REAPER project. Click “Open Project” to open the REAPER file, or find the REAPER file on your chosen output location.
