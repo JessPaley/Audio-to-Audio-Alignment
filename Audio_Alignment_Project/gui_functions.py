@@ -19,6 +19,8 @@ def rppWriter(AudioFolder,refAudio_dir,output_dir,position_t):
 
     # Importing Snippets Folder
     for file in os.listdir(AudioFolder):
+        if file in refAudio_dir:
+            continue
         audioPath_snippet = AudioFolder + '/' + file
         audioName = file.split('.')[0] # Audio name without '.wav'
 

@@ -6,6 +6,9 @@ def runCalculation(AudioFolder, ReferenceAudio):
     reference_time = []
     snippet_time = []
     for file in os.listdir(AudioFolder):
+        if file in ReferenceAudio:
+            print('skip')
+            continue
         audioPath_snippet = AudioFolder + '/' + file
         audioPath_ref = ReferenceAudio # Put Reference Track here
         audioName = file.split('.')[0] # Audio name without '.wav'
